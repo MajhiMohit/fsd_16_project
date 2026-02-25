@@ -1,20 +1,19 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Palette, Mail, Lock, User, ArrowRight } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { Eye, EyeOff, Palette, Mail, Lock, User, ArrowRight, CheckCircle2 } from "lucide-react";
 import { USERS } from "../data/mockData";
 
 const ROLES = ["visitor", "artist", "curator", "admin"];
 
 const Register = () => {
-    const { login } = useAuth();
     const navigate = useNavigate();
 
     const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", role: "visitor" });
     const [showPw, setShowPw] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
 
     const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
@@ -28,9 +27,9 @@ const Register = () => {
         if (USERS.some((u) => u.email === form.email)) return setError("That email is already registered. Sign in instead.");
 
         setLoading(true);
-        await new Promise((r) => setTimeout(r, 600));
+        await new Promise((r) => setTimeout(r, 700));
 
-        // Register by adding to in-memory list and auto-login
+        // Register: add to in-memory list — do NOT auto-login
         const newUser = {
             id: USERS.length + 1,
             name: form.name,
@@ -41,12 +40,11 @@ const Register = () => {
         };
         USERS.push(newUser);
 
-        const result = login(form.email, form.password);
         setLoading(false);
-        if (result.success) {
-            const ROLE_MAP = { admin: "/admin", artist: "/artist", curator: "/curator", visitor: "/gallery" };
-            navigate(ROLE_MAP[result.role] || "/");
-        }
+        setSuccess(true);
+
+        // Redirect to login after 2s so the user signs in manually
+        setTimeout(() => navigate("/login"), 2000);
     };
 
     return (
@@ -78,6 +76,29 @@ const Register = () => {
 
                     <form onSubmit={handleSubmit} className="auth-form">
                         {error && <div className="alert alert-error">{error}</div>}
+
+                        {/* Success banner */}
+                        {success && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                style={{
+                                    display: "flex", alignItems: "center", gap: "0.75rem",
+                                    background: "rgba(34,197,94,0.12)",
+                                    border: "1.5px solid rgba(34,197,94,0.4)",
+                                    borderRadius: "10px",
+                                    padding: "1rem 1.25rem",
+                                    marginBottom: "1rem",
+                                    color: "#4ade80",
+                                }}
+                            >
+                                <CheckCircle2 size={20} style={{ flexShrink: 0 }} />
+                                <div>
+                                    <p style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: "0.1rem" }}>Account created!</p>
+                                    <p style={{ fontSize: "0.8rem", opacity: 0.85 }}>Redirecting to sign in…</p>
+                                </div>
+                            </motion.div>
+                        )}
 
                         {/* Full Name */}
                         <div className="form-group">

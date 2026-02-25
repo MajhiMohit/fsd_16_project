@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Image, Plus, Trash2, Edit3, TrendingUp, Eye, DollarSign, Star, X, Check, Upload, Link } from "lucide-react";
+import { Image, Plus, Trash2, Edit3, TrendingUp, Eye, DollarSign, Star, X, Check, Upload, Link, MessageCircle, Send } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { ARTWORKS } from "../data/mockData";
 
@@ -10,12 +10,148 @@ const SIDEBAR_ITEMS = [
     { key: "artworks", label: "My Artworks", icon: <Image size={18} /> },
     { key: "upload", label: "Upload Artwork", icon: <Plus size={18} /> },
     { key: "sales", label: "Sales", icon: <DollarSign size={18} /> },
+    { key: "messages", label: "Buyer Messages", icon: <MessageCircle size={18} /> },
+];
+
+const MOCK_MESSAGES = [
+    { id: 1, buyer: "Nina Patel", avatar: "https://i.pravatar.cc/150?img=9", artwork: "Amber Soul", text: "Hi! Is this artwork still available? I would love to have it on my living room wall.", time: "2h ago", replied: false },
+    { id: 2, buyer: "James Curator", avatar: "https://i.pravatar.cc/150?img=12", artwork: "Neon Pulse", text: "Would you consider a commission piece in a similar style for our upcoming exhibition?", time: "1d ago", replied: true },
+    { id: 3, buyer: "Alex Morgan", avatar: "https://i.pravatar.cc/150?img=1", artwork: "Amber Soul", text: "What is the shipping time to Europe? And is certificate of authenticity included?", time: "2d ago", replied: false },
 ];
 
 const INITIAL_FORM = {
     title: "", price: "", category: "Oil Painting", era: "Contemporary",
     medium: "", dimensions: "", description: "", culturalSignificance: "",
     origin: "", tags: "",
+};
+
+// ── Buyer Messages Panel ──────────────────────────────────────────────────
+const BuyerMessages = ({ showToast }) => {
+    const [messages, setMessages] = useState(MOCK_MESSAGES);
+    const [reply, setReply] = useState({});
+    const [open, setOpen] = useState(null);
+
+    const handleReply = (id) => {
+        if (!reply[id]?.trim()) return;
+        setMessages((prev) => prev.map((m) => m.id === id ? { ...m, replied: true } : m));
+        setReply((r) => ({ ...r, [id]: "" }));
+        setOpen(null);
+        showToast("Reply sent to buyer! 📨");
+    };
+
+    const unread = messages.filter((m) => !m.replied).length;
+
+    return (
+        <div>
+            <div className="dashboard-header">
+                <div>
+                    <h2 className="font-display">Buyer Messages</h2>
+                    <p className="text-muted text-sm">
+                        Interact with interested buyers &amp; collectors
+                    </p>
+                </div>
+                {unread > 0 && (
+                    <span className="badge badge-gold" style={{ fontSize: "0.85rem", padding: "0.35rem 0.9rem" }}>
+                        {unread} Unread
+                    </span>
+                )}
+            </div>
+
+            {/* Summary cards */}
+            <div className="grid-3 mb-4">
+                {[
+                    { label: "Total Messages", value: messages.length },
+                    { label: "Awaiting Reply", value: unread },
+                    { label: "Replied", value: messages.filter(m => m.replied).length },
+                ].map((s) => (
+                    <div key={s.label} className="stat-card-dashboard glass-card">
+                        <div className="stat-dash-value">{s.value}</div>
+                        <div className="stat-dash-label">{s.label}</div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="glass-card" style={{ padding: "1.5rem" }}>
+                {messages.map((msg) => (
+                    <div
+                        key={msg.id}
+                        style={{
+                            border: `1px solid ${!msg.replied ? "var(--gold)" : "var(--border)"}`,
+                            borderRadius: "var(--radius)",
+                            padding: "1.25rem",
+                            marginBottom: "1rem",
+                            background: !msg.replied ? "rgba(212,175,55,0.05)" : "var(--surface-2)",
+                            transition: "all 0.2s",
+                        }}
+                    >
+                        {/* Header row */}
+                        <div style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start" }}>
+                            <img
+                                src={msg.avatar}
+                                alt={msg.buyer}
+                                style={{ width: 42, height: 42, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                            />
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                        <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>{msg.buyer}</span>
+                                        <span className="badge badge-gold" style={{ fontSize: "0.7rem" }}>re: {msg.artwork}</span>
+                                    </div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                        <span className="text-xs text-muted">{msg.time}</span>
+                                        <span className={`badge ${msg.replied ? "badge-green" : "badge-red"}`} style={{ fontSize: "0.7rem" }}>
+                                            {msg.replied ? "Replied" : "New"}
+                                        </span>
+                                    </div>
+                                </div>
+                                <p className="text-sm" style={{ color: "var(--text-secondary)", lineHeight: 1.6 }}>{msg.text}</p>
+                            </div>
+                        </div>
+
+                        {/* Reply section */}
+                        <div style={{ marginTop: "0.85rem", paddingLeft: "3.2rem" }}>
+                            {open === msg.id ? (
+                                <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-end" }}>
+                                    <textarea
+                                        className="input-field"
+                                        rows={2}
+                                        placeholder={`Reply to ${msg.buyer}…`}
+                                        value={reply[msg.id] || ""}
+                                        onChange={(e) => setReply((r) => ({ ...r, [msg.id]: e.target.value }))}
+                                        style={{ resize: "none", flex: 1, fontSize: "0.85rem" }}
+                                        autoFocus
+                                    />
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                                        <button
+                                            className="btn btn-primary btn-sm"
+                                            onClick={() => handleReply(msg.id)}
+                                        >
+                                            <Send size={13} /> Send
+                                        </button>
+                                        <button
+                                            className="btn btn-ghost btn-sm"
+                                            onClick={() => setOpen(null)}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    className={`btn btn-sm ${msg.replied ? "btn-ghost" : "btn-outline"}`}
+                                    onClick={() => setOpen(msg.id)}
+                                    style={{ fontSize: "0.8rem" }}
+                                >
+                                    <MessageCircle size={13} />
+                                    {msg.replied ? "Reply Again" : "Reply to Buyer"}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 };
 
 const ArtistDashboard = () => {
@@ -418,6 +554,21 @@ const ArtistDashboard = () => {
                     {active === "sales" && (
                         <div>
                             <div className="dashboard-header"><h2 className="font-display">Sales Overview</h2></div>
+
+                            {/* Revenue summary */}
+                            <div className="grid-3 mb-4">
+                                {[
+                                    { label: "Total Revenue", value: `$${totalRevenue.toLocaleString()}` },
+                                    { label: "Sold Artworks", value: artworks.filter(a => a.sold).length },
+                                    { label: "Unsold Artworks", value: artworks.filter(a => !a.sold).length },
+                                ].map((s) => (
+                                    <div key={s.label} className="stat-card-dashboard glass-card">
+                                        <div className="stat-dash-value">{s.value}</div>
+                                        <div className="stat-dash-label">{s.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+
                             <div className="glass-card" style={{ padding: "2rem", overflowX: "auto" }}>
                                 {artworks.filter((a) => a.sold).length === 0 ? (
                                     <p className="text-muted">No sales yet. Keep showcasing your art!</p>
@@ -428,7 +579,7 @@ const ArtistDashboard = () => {
                                             {artworks.filter((a) => a.sold).map((a) => (
                                                 <tr key={a.id}>
                                                     <td>{a.title}</td>
-
+                                                    <td style={{ color: "var(--gold)", fontWeight: 600 }}>${a.price}</td>
                                                     <td>{a.year}</td>
                                                     <td><span className="badge badge-green">Sold</span></td>
                                                 </tr>
@@ -438,6 +589,11 @@ const ArtistDashboard = () => {
                                 )}
                             </div>
                         </div>
+                    )}
+
+                    {/* ── BUYER MESSAGES ── */}
+                    {active === "messages" && (
+                        <BuyerMessages showToast={showToast} />
                     )}
                 </motion.div>
             </main>

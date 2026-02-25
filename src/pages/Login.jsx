@@ -5,9 +5,9 @@ import { Eye, EyeOff, Palette, Mail, Lock, ArrowRight, User } from "lucide-react
 import { useAuth } from "../context/AuthContext";
 
 const DEMO_ACCOUNTS = [
-    { role: "Admin", email: "admin@gallery.com", password: "admin123", color: "badge-red" },
+    { role: "Admin", email: "mohit@gmail.com", password: "gallery@123", color: "badge-red" },
     { role: "Artist", email: "artist@gallery.com", password: "artist123", color: "badge-purple" },
-    { role: "Curator", email: "curator@gallery.com", password: "visitor123", color: "badge-green" },
+    { role: "Curator", email: "curator@gallery.com", password: "curator123", color: "badge-green" },
     { role: "Visitor", email: "visitor@gallery.com", password: "visitor123", color: "badge-gold" },
 ];
 
@@ -25,7 +25,7 @@ const Login = () => {
         admin: "/admin",
         artist: "/artist",
         curator: "/curator",
-        visitor: "/gallery",
+        visitor: "/visitor",
     };
 
     const handleSubmit = async (e) => {

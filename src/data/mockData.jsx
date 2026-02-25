@@ -4,10 +4,12 @@
 // ============================================================
 
 export const USERS = [
-    { id: 1, name: "Alex Morgan", email: "admin@gallery.com", password: "admin123", role: "admin", avatar: "https://i.pravatar.cc/150?img=1" },
-    { id: 2, name: "Sofia Reyes", email: "artist@gallery.com", password: "artist123", role: "artist", avatar: "https://i.pravatar.cc/150?img=5" },
-    { id: 3, name: "James Curator", email: "curator@gallery.com", password: "curator123", role: "curator", avatar: "https://i.pravatar.cc/150?img=12" },
-    { id: 4, name: "Nina Patel", email: "visitor@gallery.com", password: "visitor123", role: "visitor", avatar: "https://i.pravatar.cc/150?img=9" },
+    { id: 1, name: "Mohit", email: "mohit@gmail.com", password: "gallery@123", role: "admin", avatar: "https://i.pravatar.cc/150?img=3" },
+    { id: 2, name: "Raja", email: "raja@gmail.com", password: "gallery@123", role: "admin", avatar: "https://i.pravatar.cc/150?img=7" },
+    { id: 3, name: "Ya", email: "ya@gmail.com", password: "gallery@123", role: "admin", avatar: "https://i.pravatar.cc/150?img=15" },
+    { id: 4, name: "Sofia Reyes", email: "artist@gallery.com", password: "artist123", role: "artist", avatar: "https://i.pravatar.cc/150?img=5" },
+    { id: 5, name: "James Curator", email: "curator@gallery.com", password: "curator123", role: "curator", avatar: "https://i.pravatar.cc/150?img=12" },
+    { id: 6, name: "Nina Patel", email: "visitor@gallery.com", password: "visitor123", role: "visitor", avatar: "https://i.pravatar.cc/150?img=9" },
 ];
 
 export const ARTWORKS = [

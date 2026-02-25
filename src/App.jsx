@@ -22,6 +22,7 @@ import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import ArtistDashboard from "./pages/ArtistDashboard";
 import CuratorDashboard from "./pages/CuratorDashboard";
+import VisitorDashboard from "./pages/VisitorDashboard";
 import VirtualTour from "./pages/VirtualTour";
 import Wishlist from "./pages/Wishlist";
 import Purchases from "./pages/Purchases";
@@ -35,7 +36,7 @@ const ScrollToTop = () => {
 };
 
 // Pages that should not show the footer
-const NO_FOOTER_PATHS = ["/admin", "/artist", "/curator", "/virtual-tour"];
+const NO_FOOTER_PATHS = ["/admin", "/artist", "/curator", "/visitor", "/virtual-tour"];
 
 // Inner App wrapped in Router context
 const AppInner = () => {
@@ -86,6 +87,13 @@ const AppInner = () => {
           <Route path="/curator" element={
             <ProtectedRoute roles={["curator"]}>
               <CuratorDashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* Protected — Visitor */}
+          <Route path="/visitor" element={
+            <ProtectedRoute roles={["visitor", "admin"]}>
+              <VisitorDashboard />
             </ProtectedRoute>
           } />
 

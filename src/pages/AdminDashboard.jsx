@@ -2,17 +2,17 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
     LayoutDashboard, Users, Image, Settings, BarChart3,
-    TrendingUp, Eye, ShoppingBag, AlertCircle, CheckCircle2
+    TrendingUp, Eye, ShoppingBag, AlertCircle, CheckCircle2, FileText, Shield
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { ARTWORKS, USERS, EXHIBITIONS } from "../data/mockData";
 
 const SIDEBAR_ITEMS = [
     { key: "overview", label: "Overview", icon: <LayoutDashboard size={18} /> },
-    { key: "users", label: "Users", icon: <Users size={18} /> },
-    { key: "artworks", label: "Artworks", icon: <Image size={18} /> },
+    { key: "users", label: "User Roles", icon: <Shield size={18} /> },
+    { key: "artworks", label: "Platform Content", icon: <FileText size={18} /> },
     { key: "exhibitions", label: "Exhibitions", icon: <BarChart3 size={18} /> },
-    { key: "settings", label: "Settings", icon: <Settings size={18} /> },
+    { key: "settings", label: "Gallery Settings", icon: <Settings size={18} /> },
 ];
 
 const STATS = [
@@ -25,7 +25,23 @@ const STATS = [
 const AdminDashboard = () => {
     const { user } = useAuth();
     const [active, setActive] = useState("overview");
+    const [roleMap, setRoleMap] = useState(
+        Object.fromEntries(USERS.map((u) => [u.id, u.role]))
+    );
+    const [toast, setToast] = useState(null);
 
+    const showToast = (msg) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 2800);
+    };
+
+    const handleRoleChange = (userId, newRole) => {
+        setRoleMap((prev) => ({ ...prev, [userId]: newRole }));
+    };
+
+    const saveRoles = () => {
+        showToast("User roles updated successfully! ✅");
+    };
     return (
         <div className="page-wrapper dashboard-layout">
             {/* Sidebar */}
@@ -130,7 +146,13 @@ const AdminDashboard = () => {
                     {active === "users" && (
                         <div>
                             <div className="dashboard-header">
-                                <h2 className="font-display">User Management</h2>
+                                <div>
+                                    <h2 className="font-display">User Role Management</h2>
+                                    <p className="text-muted text-sm">Assign and modify user roles across the platform</p>
+                                </div>
+                                <button className="btn btn-primary btn-sm" onClick={saveRoles}>
+                                    <CheckCircle2 size={15} /> Save Changes
+                                </button>
                             </div>
                             <div className="glass-card" style={{ overflow: "auto" }}>
                                 <table className="data-table">
@@ -138,9 +160,9 @@ const AdminDashboard = () => {
                                         <tr>
                                             <th>User</th>
                                             <th>Email</th>
-                                            <th>Role</th>
+                                            <th>Current Role</th>
+                                            <th>Change Role</th>
                                             <th>Status</th>
-                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -148,20 +170,29 @@ const AdminDashboard = () => {
                                             <tr key={u.id}>
                                                 <td>
                                                     <div className="flex gap-1" style={{ alignItems: "center" }}>
-
+                                                        <img src={u.avatar} alt={u.name} className="table-avatar" style={{ borderRadius: "50%" }} />
                                                         <span>{u.name}</span>
                                                     </div>
                                                 </td>
                                                 <td>{u.email}</td>
                                                 <td>
-                                                    <span className={`badge badge-${u.role === "admin" ? "red" : u.role === "artist" ? "purple" : u.role === "curator" ? "green" : "gold"}`}>
-                                                        {u.role}
+                                                    <span className={`badge badge-${roleMap[u.id] === "admin" ? "red" : roleMap[u.id] === "artist" ? "purple" : roleMap[u.id] === "curator" ? "green" : "gold"}`}>
+                                                        {roleMap[u.id]}
                                                     </span>
                                                 </td>
-                                                <td><span className="badge badge-green">Active</span></td>
                                                 <td>
-                                                    <button className="btn btn-ghost btn-sm">Edit</button>
+                                                    <select
+                                                        className="input-field"
+                                                        style={{ padding: "0.3rem 0.6rem", fontSize: "0.8rem", width: "auto" }}
+                                                        value={roleMap[u.id]}
+                                                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                                                    >
+                                                        {["admin", "artist", "curator", "visitor"].map((r) => (
+                                                            <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                                                        ))}
+                                                    </select>
                                                 </td>
+                                                <td><span className="badge badge-green">Active</span></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -173,7 +204,10 @@ const AdminDashboard = () => {
                     {active === "artworks" && (
                         <div>
                             <div className="dashboard-header">
-                                <h2 className="font-display">Artwork Management</h2>
+                                <div>
+                                    <h2 className="font-display">Manage Platform Content</h2>
+                                    <p className="text-muted text-sm">Review, approve, and moderate all artwork listings</p>
+                                </div>
                             </div>
                             <div className="glass-card" style={{ overflow: "auto" }}>
                                 <table className="data-table">
@@ -234,7 +268,10 @@ const AdminDashboard = () => {
                     {active === "settings" && (
                         <div>
                             <div className="dashboard-header">
-                                <h2 className="font-display">Platform Settings</h2>
+                                <div>
+                                    <h2 className="font-display">Gallery Settings</h2>
+                                    <p className="text-muted text-sm">Configure platform-wide gallery settings</p>
+                                </div>
                             </div>
                             <div className="glass-card" style={{ padding: "2rem", maxWidth: 600 }}>
                                 <div className="form-group">
@@ -243,18 +280,61 @@ const AdminDashboard = () => {
                                 </div>
                                 <div className="form-group">
                                     <label className="input-label">Contact Email</label>
-                                    <input className="input-field" defaultValue="info@aurumgallery.com" />
+                                    <input className="input-field" defaultValue="info@artgallery.com" />
                                 </div>
                                 <div className="form-group">
                                     <label className="input-label">Max Artworks Per Artist</label>
                                     <input className="input-field" type="number" defaultValue="50" />
                                 </div>
-                                <button className="btn btn-primary">Save Changes</button>
+                                <div className="form-group">
+                                    <label className="input-label">Allow Public Visitor Registration</label>
+                                    <select className="input-field">
+                                        <option value="yes">Yes — open to everyone</option>
+                                        <option value="invite">Invite only</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="input-label">Featured Artworks Limit</label>
+                                    <input className="input-field" type="number" defaultValue="8" />
+                                </div>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={() => showToast("Gallery settings saved! ✅")}
+                                >
+                                    Save Changes
+                                </button>
                             </div>
                         </div>
                     )}
                 </motion.div>
             </main>
+
+            {/* Toast notification */}
+            {toast && (
+                <div style={{
+                    position: "fixed", top: 24, right: 28, zIndex: 9999,
+                    display: "flex", alignItems: "center", gap: "0.75rem",
+                    background: "linear-gradient(135deg, #101820 0%, #0d1f2d 100%)",
+                    border: "1.5px solid var(--gold)",
+                    borderRadius: "14px",
+                    padding: "1rem 1.4rem",
+                    minWidth: "300px",
+                    boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
+                    color: "#fff",
+                    animation: "fadeInDown 0.3s ease",
+                }}>
+                    <div style={{
+                        width: 38, height: 38, borderRadius: "50%",
+                        background: "rgba(45,141,175,0.18)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "1.2rem", flexShrink: 0,
+                    }}>✅</div>
+                    <div>
+                        <p style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--gold-light)", marginBottom: "0.1rem" }}>Success!</p>
+                        <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", margin: 0 }}>{toast}</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
