@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Image, Plus, Trash2, Edit3, TrendingUp, Eye, DollarSign, Star, X, Check } from "lucide-react";
+import { Image, Plus, Trash2, Edit3, TrendingUp, Eye, DollarSign, Star, X, Check, Upload, Link } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { ARTWORKS } from "../data/mockData";
 
@@ -25,8 +26,31 @@ const ArtistDashboard = () => {
     const [editId, setEditId] = useState(null);
     const [saved, setSaved] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [toast, setToast] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [imageUrl, setImageUrl] = useState("");
+    const [dragOver, setDragOver] = useState(false);
+    const [imageTab, setImageTab] = useState("upload");
+    const fileInputRef = useRef(null);
+
+    const showToast = (msg) => {
+        setToast({ msg });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+    const handleImageFile = (file) => {
+        if (!file || !file.type.startsWith("image/")) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setImagePreview(e.target.result);
+            setImageUrl("");
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const clearImage = () => { setImagePreview(null); setImageUrl(""); };
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -51,15 +75,17 @@ const ArtistDashboard = () => {
                 featured: false,
                 sold: false,
                 views: 0,
-                image: "https://images.unsplash.com/photo-1579783901586-d88db74b4fe4?w=800&q=80",
+                image: imagePreview || imageUrl || "https://images.unsplash.com/photo-1579783901586-d88db74b4fe4?w=800&q=80",
                 tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
                 year: new Date().getFullYear(),
             };
             setArtworks((prev) => [newArtwork, ...prev]);
         }
         setForm(INITIAL_FORM);
+        clearImage();
         setSaved(true);
-        setTimeout(() => { setSaved(false); setActive("artworks"); }, 1200);
+        showToast(editId ? "Artwork updated successfully! ✅" : "Artwork uploaded successfully! 🎉");
+        setTimeout(() => { setSaved(false); setActive("artworks"); }, 1500);
     };
 
     const startEdit = (artwork) => {
@@ -211,8 +237,130 @@ const ArtistDashboard = () => {
                                 <h2 className="font-display">{editId ? "Edit Artwork" : "Upload New Artwork"}</h2>
                             </div>
                             <div className="glass-card" style={{ padding: "2rem", maxWidth: 700 }}>
-                                {saved && <div className="alert alert-success mb-3">✅ Artwork saved successfully!</div>}
                                 <form onSubmit={handleSave}>
+
+                                    {/* ── Image Upload Box ── */}
+                                    <div className="form-group">
+                                        <label className="input-label">Artwork Image</label>
+
+                                        {/* Tab switcher */}
+                                        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                                            <button type="button"
+                                                onClick={() => setImageTab("upload")}
+                                                style={{
+                                                    padding: "0.35rem 1rem", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600,
+                                                    background: imageTab === "upload" ? "var(--gold)" : "var(--surface-2)",
+                                                    color: imageTab === "upload" ? "#111" : "var(--text-muted)",
+                                                    transition: "all 0.2s"
+                                                }}>
+                                                <Upload size={13} style={{ marginRight: 4, verticalAlign: "middle" }} />Upload File
+                                            </button>
+                                            <button type="button"
+                                                onClick={() => setImageTab("url")}
+                                                style={{
+                                                    padding: "0.35rem 1rem", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600,
+                                                    background: imageTab === "url" ? "var(--gold)" : "var(--surface-2)",
+                                                    color: imageTab === "url" ? "#111" : "var(--text-muted)",
+                                                    transition: "all 0.2s"
+                                                }}>
+                                                <Link size={13} style={{ marginRight: 4, verticalAlign: "middle" }} />Image URL
+                                            </button>
+                                        </div>
+
+                                        {imageTab === "upload" ? (
+                                            /* ─ Drag & Drop / Browse zone ─ */
+                                            <div
+                                                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                                                onDragLeave={() => setDragOver(false)}
+                                                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleImageFile(e.dataTransfer.files[0]); }}
+                                                onClick={() => !imagePreview && fileInputRef.current?.click()}
+                                                style={{
+                                                    border: `2px dashed ${dragOver ? "var(--gold)" : "var(--border)"}`,
+                                                    borderRadius: "12px",
+                                                    background: dragOver ? "rgba(212,175,55,0.07)" : "var(--surface-2)",
+                                                    cursor: imagePreview ? "default" : "pointer",
+                                                    minHeight: "160px",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    position: "relative",
+                                                    overflow: "hidden",
+                                                    transition: "border-color 0.2s, background 0.2s"
+                                                }}
+                                            >
+                                                {imagePreview ? (
+                                                    <>
+                                                        <img
+                                                            src={imagePreview}
+                                                            alt="Preview"
+                                                            style={{ width: "100%", height: "200px", objectFit: "cover", display: "block" }}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); clearImage(); }}
+                                                            style={{
+                                                                position: "absolute", top: 8, right: 8,
+                                                                background: "rgba(0,0,0,0.6)", border: "none", borderRadius: "50%",
+                                                                width: 28, height: 28, display: "flex", alignItems: "center",
+                                                                justifyContent: "center", cursor: "pointer", color: "#fff"
+                                                            }}
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                                                            style={{
+                                                                position: "absolute", bottom: 8, right: 8,
+                                                                background: "var(--gold)", border: "none", borderRadius: "8px",
+                                                                padding: "0.3rem 0.7rem", cursor: "pointer", color: "#111",
+                                                                fontSize: "0.75rem", fontWeight: 700
+                                                            }}
+                                                        >
+                                                            Change
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                                                        <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>🖼️</div>
+                                                        <p style={{ fontWeight: 600, marginBottom: "0.3rem" }}>Drag & drop your image here</p>
+                                                        <p style={{ fontSize: "0.8rem" }}>or <span style={{ color: "var(--gold)", textDecoration: "underline" }}>click to browse</span></p>
+                                                        <p style={{ fontSize: "0.72rem", marginTop: "0.4rem" }}>PNG, JPG, WEBP • Max 10 MB</p>
+                                                    </div>
+                                                )}
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    style={{ display: "none" }}
+                                                    onChange={(e) => handleImageFile(e.target.files[0])}
+                                                />
+                                            </div>
+                                        ) : (
+                                            /* ─ URL input + preview ─ */
+                                            <div>
+                                                <input
+                                                    className="input-field"
+                                                    placeholder="https://example.com/artwork.jpg"
+                                                    value={imageUrl}
+                                                    onChange={(e) => { setImageUrl(e.target.value); setImagePreview(null); }}
+                                                />
+                                                {imageUrl && (
+                                                    <div style={{ marginTop: "0.75rem", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--border)" }}>
+                                                        <img
+                                                            src={imageUrl}
+                                                            alt="URL Preview"
+                                                            onError={(e) => { e.target.style.display = "none"; }}
+                                                            onLoad={(e) => { e.target.style.display = "block"; }}
+                                                            style={{ width: "100%", maxHeight: "200px", objectFit: "cover", display: "block" }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* ── End Image Upload Box ── */}
+
                                     <div className="grid-2">
                                         <div className="form-group">
                                             <label className="input-label">Title *</label>
@@ -260,7 +408,7 @@ const ArtistDashboard = () => {
                                         <button type="submit" className="btn btn-primary">
                                             {saved ? <><Check size={16} /> Saved!</> : <>{editId ? "Update Artwork" : "Upload Artwork"}</>}
                                         </button>
-                                        <button type="button" className="btn btn-ghost" onClick={() => { setForm(INITIAL_FORM); setEditId(null); setActive("artworks"); }}>Cancel</button>
+                                        <button type="button" className="btn btn-ghost" onClick={() => { setForm(INITIAL_FORM); setEditId(null); clearImage(); setActive("artworks"); }}>Cancel</button>
                                     </div>
                                 </form>
                             </div>
@@ -309,6 +457,84 @@ const ArtistDashboard = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* ── Toast Popup (via Portal → renders on body, escapes grid stacking context) ── */}
+            {ReactDOM.createPortal(
+                <AnimatePresence>
+                    {toast && (
+                        <motion.div
+                            key="toast"
+                            initial={{ opacity: 0, y: -30, scale: 0.92 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -20, scale: 0.92 }}
+                            transition={{ duration: 0.35, ease: "easeOut" }}
+                            style={{
+                                position: "fixed",
+                                top: "24px",
+                                right: "28px",
+                                zIndex: 9999,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.75rem",
+                                background: "linear-gradient(135deg, #101820 0%, #0d1f2d 100%)",
+                                border: "1.5px solid var(--gold)",
+                                borderRadius: "14px",
+                                padding: "1rem 1.4rem",
+                                minWidth: "300px",
+                                boxShadow: "0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(45,141,175,0.2)",
+                                color: "#fff",
+                                overflow: "hidden",
+                            }}
+                        >
+                            {/* Icon circle */}
+                            <div style={{
+                                width: 42, height: 42, borderRadius: "50%",
+                                background: "rgba(45,141,175,0.18)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: "1.4rem", flexShrink: 0,
+                                border: "1px solid rgba(45,141,175,0.3)"
+                            }}>
+                                🎉
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <p style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: "0.2rem", color: "var(--gold-light)" }}>
+                                    Success!
+                                </p>
+                                <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", margin: 0 }}>
+                                    {toast.msg}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setToast(null)}
+                                style={{
+                                    background: "none", border: "none", cursor: "pointer",
+                                    color: "var(--text-muted)", padding: "2px", display: "flex",
+                                    alignItems: "center", transition: "color 0.2s", flexShrink: 0
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.color = "#fff"}
+                                onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+                            >
+                                <X size={16} />
+                            </button>
+                            {/* Shrinking gold progress bar */}
+                            <motion.div
+                                initial={{ scaleX: 1 }}
+                                animate={{ scaleX: 0 }}
+                                transition={{ duration: 3, ease: "linear" }}
+                                style={{
+                                    position: "absolute",
+                                    bottom: 0, left: 0,
+                                    height: "3px",
+                                    width: "100%",
+                                    background: "var(--gold)",
+                                    transformOrigin: "left",
+                                }}
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 };
