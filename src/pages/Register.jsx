@@ -4,7 +4,12 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Palette, Mail, Lock, User, ArrowRight, CheckCircle2 } from "lucide-react";
 import { USERS } from "../data/mockData";
 
-const ROLES = ["visitor", "artist", "curator", "admin"];
+// Admin role is reserved — only 3 fixed accounts (mohit, raja, ya) exist.
+// Nobody can self-register as admin.
+const ROLES = ["visitor", "artist", "curator"];
+
+// The 3 authorised admin emails — no registration allowed for these
+const ADMIN_EMAILS = ["mohit@gmail.com", "raja@gmail.com", "ya@gmail.com"];
 
 const Register = () => {
     const navigate = useNavigate();
@@ -25,6 +30,11 @@ const Register = () => {
         if (form.password.length < 6) return setError("Password must be at least 6 characters.");
         if (form.password !== form.confirm) return setError("Passwords do not match.");
         if (USERS.some((u) => u.email === form.email)) return setError("That email is already registered. Sign in instead.");
+
+        // Block anyone from registering as admin
+        if (form.role === "admin" || ADMIN_EMAILS.includes(form.email.toLowerCase())) {
+            return setError("Admin accounts cannot be created through registration.");
+        }
 
         setLoading(true);
         await new Promise((r) => setTimeout(r, 700));
